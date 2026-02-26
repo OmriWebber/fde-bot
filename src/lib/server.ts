@@ -51,8 +51,8 @@ export function startNotificationServer(): void {
     });
   });
 
-  const port = 3001;
-  const host = "127.0.0.1";
+  const port = Number(process.env.PORT ?? 3001);
+  const host = "0.0.0.0";
   server.listen(port, host, () => {
     console.info(`Notification server listening on ${host}:${port}`);
   });
