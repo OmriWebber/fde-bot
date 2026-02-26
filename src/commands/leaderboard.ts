@@ -8,7 +8,9 @@ const data = new SlashCommandBuilder()
   .setName("leaderboard")
   .setDescription("Show current season standings — top 10 drivers");
 
-async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
+async function execute(
+  interaction: ChatInputCommandInteraction,
+): Promise<void> {
   await interaction.deferReply();
 
   const season = await prisma.season.findFirst({ where: { status: "active" } });
@@ -31,7 +33,7 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
     return;
   }
 
-  const driverIds = standings.map((s) => s.driverId);
+  const driverIds = standings.map((s: { driverId: string }) => s.driverId);
 
   const [drivers, xpTotals] = await Promise.all([
     prisma.driver.findMany({
@@ -45,17 +47,28 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
     }),
   ]);
 
-  const driverMap = new Map(drivers.map((d) => [d.id, d.gamertag]));
-  const xpMap = new Map(xpTotals.map((x) => [x.driverId, x._sum.amount ?? 0]));
+  const driverMap = new Map(
+    drivers.map((d: { id: string; gamertag: string }) => [d.id, d.gamertag]),
+  );
+  const xpMap = new Map(
+    xpTotals.map((x: { driverId: string; _sum: { amount: number | null } }) => [
+      x.driverId,
+      x._sum.amount ?? 0,
+    ]),
+  );
 
-  const rows = standings.map((s, i) => ({
-    position: i + 1,
-    gamertag: driverMap.get(s.driverId) ?? "Unknown",
-    totalScore: s._sum.score ?? 0,
-    totalXP: xpMap.get(s.driverId) ?? 0,
-  }));
+  const rows = standings.map(
+    (s: { driverId: string; _sum: { score: number | null } }, i: number) => ({
+      position: i + 1,
+      gamertag: driverMap.get(s.driverId) ?? "Unknown",
+      totalScore: s._sum.score ?? 0,
+      totalXP: xpMap.get(s.driverId) ?? 0,
+    }),
+  );
 
-  await interaction.editReply({ embeds: [buildLeaderboardEmbed(season, rows)] });
+  await interaction.editReply({
+    embeds: [buildLeaderboardEmbed(season, rows)],
+  });
 }
 
 const command: Command = { data, execute };

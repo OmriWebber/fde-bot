@@ -15,10 +15,12 @@ const data = new SlashCommandBuilder()
       .setName("gamertag")
       .setDescription("Driver gamertag")
       .setRequired(true)
-      .setAutocomplete(true)
+      .setAutocomplete(true),
   );
 
-async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {
+async function autocomplete(
+  interaction: AutocompleteInteraction,
+): Promise<void> {
   const focused = interaction.options.getFocused();
   const drivers = await prisma.driver.findMany({
     where: { gamertag: { contains: focused, mode: "insensitive" } },
@@ -27,11 +29,16 @@ async function autocomplete(interaction: AutocompleteInteraction): Promise<void>
     orderBy: { gamertag: "asc" },
   });
   await interaction.respond(
-    drivers.map((d) => ({ name: d.gamertag, value: d.gamertag }))
+    drivers.map((d: { gamertag: string }) => ({
+      name: d.gamertag,
+      value: d.gamertag,
+    })),
   );
 }
 
-async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
+async function execute(
+  interaction: ChatInputCommandInteraction,
+): Promise<void> {
   await interaction.deferReply();
 
   const gamertag = interaction.options.getString("gamertag", true);
@@ -52,14 +59,18 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
   });
 
   if (!driver) {
-    const platformUrl = process.env.PLATFORM_URL ?? "https://forzadriftevents.com";
+    const platformUrl =
+      process.env.PLATFORM_URL ?? "https://forzadriftevents.com";
     await interaction.editReply(
-      `No driver found with gamertag **${gamertag}**. Register at ${platformUrl}/register`
+      `No driver found with gamertag **${gamertag}**. Register at ${platformUrl}/register`,
     );
     return;
   }
 
-  const totalXP = driver.xpEvents.reduce((sum, ev) => sum + ev.amount, 0);
+  const totalXP = driver.xpEvents.reduce(
+    (sum: number, ev: { amount: number }) => sum + ev.amount,
+    0,
+  );
 
   await interaction.editReply({
     embeds: [buildProfileEmbed(driver, totalXP, driver.results)],

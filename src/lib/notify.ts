@@ -64,7 +64,12 @@ export async function notifyResultsPosted(roundId: string): Promise<void> {
   });
 
   const xpEvents = await prisma.xpEvent.findMany({
-    where: { roundId, driverId: { in: results.map((r) => r.driverId) } },
+    where: {
+      roundId,
+      driverId: {
+        in: results.map((result: { driverId: string }) => result.driverId),
+      },
+    },
   });
 
   const xpByDriver = new Map<string, number>();
@@ -72,12 +77,19 @@ export async function notifyResultsPosted(roundId: string): Promise<void> {
     xpByDriver.set(ev.driverId, (xpByDriver.get(ev.driverId) ?? 0) + ev.amount);
   }
 
-  const topResults = results.map((r) => ({
-    position: r.position,
-    score: r.score,
-    driver: r.driver,
-    xpAwarded: xpByDriver.get(r.driverId) ?? 0,
-  }));
+  const topResults = results.map(
+    (result: {
+      position: number | null;
+      score: number;
+      driver: { gamertag: string };
+      driverId: string;
+    }) => ({
+      position: result.position,
+      score: result.score,
+      driver: result.driver,
+      xpAwarded: xpByDriver.get(result.driverId) ?? 0,
+    }),
+  );
 
   const channel = await getTextChannel(channelId);
   if (!channel) {
@@ -85,7 +97,9 @@ export async function notifyResultsPosted(roundId: string): Promise<void> {
     return;
   }
 
-  await channel.send({ embeds: [buildResultsPostedEmbed({ round, topResults })] });
+  await channel.send({
+    embeds: [buildResultsPostedEmbed({ round, topResults })],
+  });
 }
 
 export async function notifySeasonComplete(seasonId: string): Promise<void> {
@@ -95,7 +109,9 @@ export async function notifySeasonComplete(seasonId: string): Promise<void> {
     return;
   }
 
-  const season = await prisma.season.findUniqueOrThrow({ where: { id: seasonId } });
+  const season = await prisma.season.findUniqueOrThrow({
+    where: { id: seasonId },
+  });
 
   const standings = await prisma.result.groupBy({
     by: ["driverId"],
@@ -105,20 +121,32 @@ export async function notifySeasonComplete(seasonId: string): Promise<void> {
     take: 5,
   });
 
-  const driverIds = standings.map((s) => s.driverId);
+  const driverIds = standings.map(
+    (standing: { driverId: string }) => standing.driverId,
+  );
   const drivers = await prisma.driver.findMany({
     where: { id: { in: driverIds } },
     select: { id: true, gamertag: true },
   });
 
-  const driverMap = new Map(drivers.map((d) => [d.id, d.gamertag]));
+  const driverMap = new Map(
+    drivers.map((driver: { id: string; gamertag: string }) => [
+      driver.id,
+      driver.gamertag,
+    ]),
+  );
 
-  const top5 = standings.map((s, i) => ({
-    position: i + 1,
-    gamertag: driverMap.get(s.driverId) ?? "Unknown",
-    totalScore: s._sum.score ?? 0,
-    totalXP: 0,
-  }));
+  const top5 = standings.map(
+    (
+      standing: { driverId: string; _sum: { score: number | null } },
+      index: number,
+    ) => ({
+      position: index + 1,
+      gamertag: driverMap.get(standing.driverId) ?? "Unknown",
+      totalScore: standing._sum.score ?? 0,
+      totalXP: 0,
+    }),
+  );
 
   const [totalRounds, totalDriversResult] = await Promise.all([
     prisma.round.count({ where: { seasonId, status: "complete" } }),

@@ -27,9 +27,14 @@ for (const command of [
 }
 
 // Register events
-client.once(readyEvent.name, readyEvent.execute);
-client.on(interactionCreateEvent.name, (...args) => {
-  void interactionCreateEvent.execute(...(args as Parameters<typeof interactionCreateEvent.execute>));
+client.once("ready", (...args) => {
+  readyEvent.execute(...(args as Parameters<typeof readyEvent.execute>));
+});
+
+client.on("interactionCreate", (...args) => {
+  void interactionCreateEvent.execute(
+    ...(args as Parameters<typeof interactionCreateEvent.execute>),
+  );
 });
 
 // Wire notifications and HTTP server once the bot is ready

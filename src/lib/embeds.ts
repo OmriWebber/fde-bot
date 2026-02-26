@@ -1,5 +1,4 @@
 import { EmbedBuilder } from "discord.js";
-import type { Driver, Round, Season, Result } from "@prisma/client";
 import {
   getRank,
   formatScore,
@@ -23,8 +22,8 @@ interface StandingRow {
 }
 
 export function buildLeaderboardEmbed(
-  season: Season,
-  rows: StandingRow[]
+  season: { name: string },
+  rows: StandingRow[],
 ): EmbedBuilder {
   const lines = rows.map((r) => {
     const rank = getRank(r.totalXP);
@@ -49,16 +48,16 @@ interface ProfileResult {
 }
 
 export function buildProfileEmbed(
-  driver: Driver & { _count: { cars: number } },
+  driver: { gamertag: string; slug: string; _count: { cars: number } },
   totalXP: number,
-  lastResults: ProfileResult[]
+  lastResults: ProfileResult[],
 ): EmbedBuilder {
   const rank = getRank(totalXP);
   const profileUrl = `${PLATFORM_URL}/drivers/${driver.slug}`;
 
   const resultLines = lastResults.map(
     (r) =>
-      `Round/${r.round.number} — ${r.round.name} · P${r.position ?? "—"} · ${formatScore(r.score)} pts`
+      `Round/${r.round.number} — ${r.round.name} · P${r.position ?? "—"} · ${formatScore(r.score)} pts`,
   );
 
   return new EmbedBuilder()
@@ -72,21 +71,32 @@ export function buildProfileEmbed(
         inline: true,
       },
       { name: "XP", value: formatXP(totalXP), inline: true },
-      { name: "Cars", value: String(driver._count.cars), inline: true }
+      { name: "Cars", value: String(driver._count.cars), inline: true },
     )
     .addFields({
       name: "Last 5 Results",
-      value: resultLines.length > 0 ? resultLines.join("\n") : "No results yet.",
+      value:
+        resultLines.length > 0 ? resultLines.join("\n") : "No results yet.",
     })
     .setFooter({ text: profileUrl });
 }
 
 // ─── Round ────────────────────────────────────────────────────────────────────
 
-interface RoundWithRelations extends Round {
-  season: Season;
+interface RoundWithRelations {
+  number: number;
+  name: string;
+  type: string;
+  status: "upcoming" | "live" | "complete";
+  scheduledAt: Date | null;
+  venue: string | null;
+  season: { name: string };
   _count: { registrations: number };
-  results: Array<Result & { driver: { gamertag: string } }>;
+  results: Array<{
+    position: number | null;
+    score: number;
+    driver: { gamertag: string };
+  }>;
 }
 
 export function buildRoundEmbed(round: RoundWithRelations): EmbedBuilder {
@@ -95,7 +105,7 @@ export function buildRoundEmbed(round: RoundWithRelations): EmbedBuilder {
     .setTitle(`${round.season.name} · Round/${round.number} — ${round.name}`)
     .addFields(
       { name: "Type", value: capitalise(round.type), inline: true },
-      { name: "Status", value: capitalise(round.status), inline: true }
+      { name: "Status", value: capitalise(round.status), inline: true },
     );
 
   if (round.scheduledAt) {
@@ -123,7 +133,7 @@ export function buildRoundEmbed(round: RoundWithRelations): EmbedBuilder {
       .slice(0, 3)
       .map(
         (r) =>
-          `P${r.position ?? "—"} — **${r.driver.gamertag}** · ${formatScore(r.score)} pts`
+          `P${r.position ?? "—"} — **${r.driver.gamertag}** · ${formatScore(r.score)} pts`,
       )
       .join("\n");
     embed.addFields({ name: "Podium", value: podium });
@@ -135,22 +145,26 @@ export function buildRoundEmbed(round: RoundWithRelations): EmbedBuilder {
 // ─── Notify: Round Open ───────────────────────────────────────────────────────
 
 interface RoundOpenData {
-  round: Round & { season: Season };
+  round: {
+    number: number;
+    name: string;
+    type: string;
+    scheduledAt: Date | null;
+    season: { name: string };
+  };
 }
 
 export function buildRoundOpenEmbed({ round }: RoundOpenData): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setColor(COLOUR_RED)
     .setTitle(
-      `${round.season.name} · Round/${round.number} — Registration Open`
+      `${round.season.name} · Round/${round.number} — Registration Open`,
     )
     .addFields(
       { name: "Track", value: round.name, inline: true },
-      { name: "Type", value: capitalise(round.type), inline: true }
+      { name: "Type", value: capitalise(round.type), inline: true },
     )
-    .setDescription(
-      `Registration is now open — ${PLATFORM_URL}/register`
-    )
+    .setDescription(`Registration is now open — ${PLATFORM_URL}/register`)
     .setTimestamp();
 
   if (round.scheduledAt) {
@@ -167,7 +181,7 @@ export function buildRoundOpenEmbed({ round }: RoundOpenData): EmbedBuilder {
 // ─── Notify: Results Posted ───────────────────────────────────────────────────
 
 interface ResultsPostedData {
-  round: Round & { season: Season };
+  round: { number: number; season: { name: string } };
   topResults: Array<{
     position: number | null;
     score: number;
@@ -182,7 +196,7 @@ export function buildResultsPostedEmbed({
 }: ResultsPostedData): EmbedBuilder {
   const podiumLines = topResults.map(
     (r) =>
-      `P${r.position ?? "—"} — **${r.driver.gamertag}** · ${formatScore(r.score)} pts · +${formatXP(r.xpAwarded)} XP`
+      `P${r.position ?? "—"} — **${r.driver.gamertag}** · ${formatScore(r.score)} pts · +${formatXP(r.xpAwarded)} XP`,
   );
 
   return new EmbedBuilder()
@@ -198,7 +212,7 @@ export function buildResultsPostedEmbed({
 // ─── Notify: Season Complete ──────────────────────────────────────────────────
 
 interface SeasonCompleteData {
-  season: Season;
+  season: { name: string };
   top5: StandingRow[];
   totalRounds: number;
   totalDrivers: number;
@@ -213,7 +227,7 @@ export function buildSeasonCompleteEmbed({
   const champion = top5[0];
   const standingsLines = top5.map(
     (r) =>
-      `\`${String(r.position).padStart(2, " ")}.\` **${r.gamertag}** — ${formatScore(r.totalScore)} pts`
+      `\`${String(r.position).padStart(2, " ")}.\` **${r.gamertag}** — ${formatScore(r.totalScore)} pts`,
   );
 
   return new EmbedBuilder()
@@ -222,12 +236,12 @@ export function buildSeasonCompleteEmbed({
     .setDescription(
       champion
         ? `Season champion: **${champion.gamertag}** · ${formatScore(champion.totalScore)} pts`
-        : "Season complete."
+        : "Season complete.",
     )
     .addFields(
       { name: "Top 5", value: standingsLines.join("\n") },
       { name: "Rounds", value: String(totalRounds), inline: true },
-      { name: "Drivers", value: String(totalDrivers), inline: true }
+      { name: "Drivers", value: String(totalDrivers), inline: true },
     )
     .setFooter({ text: `${PLATFORM_URL}/leaderboard` })
     .setTimestamp();
