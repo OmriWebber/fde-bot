@@ -173,7 +173,7 @@ async function execute(
       body: bodyText,
     });
     await interaction.editReply(
-      `Failed to update livery (HTTP ${response.status}). Please try again later.`,
+      `Failed to update livery (HTTP ${response.status}, ${platformErrorCode}). Please try again later.`,
     );
     return;
   }
