@@ -1,0 +1,147 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Driver {
+  id            String         @id @default(cuid())
+  gamertag      String         @unique
+  slug          String         @unique
+  discordId     String?
+  avatarUrl     String?
+  createdAt     DateTime       @default(now())
+  cars          Car[]
+  registrations Registration[]
+  results       Result[]
+  xpEvents      XpEvent[]
+}
+
+model Car {
+  id             String         @id @default(cuid())
+  driverId       String
+  driver         Driver         @relation(fields: [driverId], references: [id])
+  make           String
+  model          String
+  year           Int
+  number         String?
+  piClass        String?
+  horsepower     Int?
+  weight         Int?
+  tireFrontWidth String?
+  tireRearWidth  String?
+  tireCompound   String?
+  liveryUrl      String?
+  createdAt      DateTime       @default(now())
+  registrations  Registration[]
+}
+
+model Season {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  status      SeasonStatus @default(draft)
+  roundsCount Int          @default(0)
+  createdAt   DateTime     @default(now())
+  rounds      Round[]
+}
+
+model Round {
+  id            String         @id @default(cuid())
+  seasonId      String
+  season        Season         @relation(fields: [seasonId], references: [id])
+  number        Int
+  name          String
+  type          RoundType      @default(touge)
+  status        RoundStatus    @default(upcoming)
+  scheduledAt   DateTime?
+  venue         String?
+  createdAt     DateTime       @default(now())
+  registrations Registration[]
+  results       Result[]
+}
+
+model Registration {
+  id        String    @id @default(cuid())
+  driverId  String
+  driver    Driver    @relation(fields: [driverId], references: [id])
+  carId     String
+  car       Car       @relation(fields: [carId], references: [id])
+  roundId   String
+  round     Round     @relation(fields: [roundId], references: [id])
+  status    RegStatus @default(pending)
+  seed      Int?
+  createdAt DateTime  @default(now())
+  result    Result?
+}
+
+model Result {
+  id             String       @id @default(cuid())
+  registrationId String       @unique
+  registration   Registration @relation(fields: [registrationId], references: [id])
+  driverId       String
+  driver         Driver       @relation(fields: [driverId], references: [id])
+  roundId        String
+  round          Round        @relation(fields: [roundId], references: [id])
+  score          Float
+  angle          Float?
+  proximity      Float?
+  speed          Float?
+  style          Float?
+  position       Int?
+  createdAt      DateTime     @default(now())
+}
+
+model XpEvent {
+  id        String      @id @default(cuid())
+  driverId  String
+  driver    Driver      @relation(fields: [driverId], references: [id])
+  type      XpEventType
+  amount    Int
+  roundId   String?
+  createdAt DateTime    @default(now())
+}
+
+enum SeasonStatus {
+  draft
+  active
+  complete
+}
+
+enum RoundType {
+  touge
+  circuit
+  wangan
+}
+
+enum RoundStatus {
+  upcoming
+  live
+  complete
+}
+
+enum RegStatus {
+  pending
+  confirmed
+  dns
+  dq
+}
+
+enum XpEventType {
+  participation
+  win
+  podium
+  season_complete
+  achievement
+  perfect_tandem
+  personal_best
+}
