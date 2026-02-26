@@ -107,6 +107,8 @@ async function fetchAutocompleteChoices(
     },
   });
 
+  console.log("Fetched autocomplete choices response:", response);
+
   if (!response.ok) return [];
 
   const payload = (await response.json()) as DiscordChoicesResponse;
