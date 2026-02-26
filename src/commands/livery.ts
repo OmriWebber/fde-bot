@@ -16,6 +16,13 @@ interface CarsResponse {
   }>;
 }
 
+interface DiscordChoicesResponse {
+  choices: Array<{
+    name: string;
+    value: string;
+  }>;
+}
+
 const data = new SlashCommandBuilder()
   .setName("livery")
   .setDescription("Attach a livery image URL to one of your registered cars")
@@ -75,21 +82,68 @@ async function fetchOwnedCars(
   return payload.cars;
 }
 
+async function fetchAutocompleteChoices(
+  discordId: string,
+  query: string,
+): Promise<DiscordChoicesResponse["choices"]> {
+  const { platformUrl, secret } = getConfig();
+  if (!secret) return [];
+
+  const url = new URL("/api/bot/cars", platformUrl);
+  url.searchParams.set("discordId", discordId);
+  url.searchParams.set("format", "discord_choices");
+  if (query) {
+    url.searchParams.set("query", query);
+  }
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${secret}`,
+    },
+  });
+
+  if (!response.ok) return [];
+
+  const payload = (await response.json()) as DiscordChoicesResponse;
+  if (!payload || !Array.isArray(payload.choices)) return [];
+
+  return payload.choices
+    .filter(
+      (choice) =>
+        typeof choice?.name === "string" && typeof choice?.value === "string",
+    )
+    .slice(0, 25)
+    .map((choice) => ({
+      name: choice.name.slice(0, 100),
+      value: choice.value,
+    }));
+}
+
 async function autocomplete(
   interaction: AutocompleteInteraction,
 ): Promise<void> {
-  const focused = interaction.options.getFocused().toLowerCase();
+  const focused = interaction.options.getFocused().trim();
 
   try {
+    const choices = await fetchAutocompleteChoices(
+      interaction.user.id,
+      focused,
+    );
+
+    if (choices.length > 0) {
+      await interaction.respond(choices);
+      return;
+    }
+
     const cars = await fetchOwnedCars(interaction.user.id);
-    const choices = cars
+    const fallbackChoices = cars
       .filter((car) => {
         if (!focused) return true;
+        const needle = focused.toLowerCase();
         const label =
           `${car.year} ${car.make} ${car.model} ${car.number ?? ""}`.toLowerCase();
-        return (
-          car.id.toLowerCase().includes(focused) || label.includes(focused)
-        );
+        return car.id.toLowerCase().includes(needle) || label.includes(needle);
       })
       .slice(0, 25)
       .map((car) => {
@@ -101,7 +155,7 @@ async function autocomplete(
         return { name, value: car.id };
       });
 
-    await interaction.respond(choices);
+    await interaction.respond(fallbackChoices);
   } catch (err) {
     console.error("Livery autocomplete failed:", err);
     await interaction.respond([]);
