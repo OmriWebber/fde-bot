@@ -5,6 +5,7 @@ import leaderboardCommand from "./commands/leaderboard";
 import profileCommand from "./commands/profile";
 import roundCommand from "./commands/round";
 import registerCommand from "./commands/register";
+import liveryCommand from "./commands/livery";
 
 async function main(): Promise<void> {
   const token = process.env.DISCORD_TOKEN;
@@ -21,6 +22,7 @@ async function main(): Promise<void> {
     profileCommand,
     roundCommand,
     registerCommand,
+    liveryCommand,
   ].map((c) => c.data.toJSON());
 
   const rest = new REST().setToken(token);

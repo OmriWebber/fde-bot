@@ -6,6 +6,7 @@ import leaderboardCommand from "./commands/leaderboard";
 import profileCommand from "./commands/profile";
 import roundCommand from "./commands/round";
 import registerCommand from "./commands/register";
+import liveryCommand from "./commands/livery";
 
 import readyEvent from "./events/ready";
 import interactionCreateEvent from "./events/interactionCreate";
@@ -22,6 +23,7 @@ for (const command of [
   profileCommand,
   roundCommand,
   registerCommand,
+  liveryCommand,
 ]) {
   client.commands.set(command.data.name, command);
 }
