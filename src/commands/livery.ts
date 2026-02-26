@@ -157,7 +157,21 @@ async function execute(
   }
 
   if (!response.ok) {
-    console.log("Failed to update livery:", response);
+    const platformErrorCode = response.headers.get("x-bot-error-code");
+    const bodyText = await response.text().catch(() => "");
+
+    if (platformErrorCode === "BOT_SECRET_MISSING") {
+      await interaction.editReply(
+        "Livery update is temporarily unavailable: main platform bot secret is not configured.",
+      );
+      return;
+    }
+
+    console.error("Failed to update livery", {
+      status: response.status,
+      platformErrorCode,
+      body: bodyText,
+    });
     await interaction.editReply(
       `Failed to update livery (HTTP ${response.status}). Please try again later.`,
     );
