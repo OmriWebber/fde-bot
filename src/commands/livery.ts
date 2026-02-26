@@ -23,6 +23,8 @@ interface DiscordChoicesResponse {
   }>;
 }
 
+type DiscordChoice = { name: string; value: string };
+
 const data = new SlashCommandBuilder()
   .setName("livery")
   .setDescription("Attach a livery image URL to one of your registered cars")
@@ -120,6 +122,21 @@ async function fetchAutocompleteChoices(
     }));
 }
 
+async function respondOnce(
+  interaction: AutocompleteInteraction,
+  choices: DiscordChoice[],
+): Promise<void> {
+  if (interaction.responded) return;
+
+  try {
+    await interaction.respond(choices);
+  } catch (err) {
+    const errorCode = (err as { code?: number | string })?.code;
+    if (interaction.responded || errorCode === 40060) return;
+    throw err;
+  }
+}
+
 async function autocomplete(
   interaction: AutocompleteInteraction,
 ): Promise<void> {
@@ -132,7 +149,7 @@ async function autocomplete(
     );
 
     if (choices.length > 0) {
-      await interaction.respond(choices);
+      await respondOnce(interaction, choices);
       return;
     }
 
@@ -155,10 +172,10 @@ async function autocomplete(
         return { name, value: car.id };
       });
 
-    await interaction.respond(fallbackChoices);
+    await respondOnce(interaction, fallbackChoices);
   } catch (err) {
     console.error("Livery autocomplete failed:", err);
-    await interaction.respond([]);
+    await respondOnce(interaction, []);
   }
 }
 
