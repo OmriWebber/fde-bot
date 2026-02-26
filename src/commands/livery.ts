@@ -77,6 +77,8 @@ async function fetchOwnedCars(
     },
   });
 
+  console.log("Fetched cars response:", response);
+
   if (!response.ok) return [];
 
   const payload = (await response.json()) as CarsResponse;
