@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/index.ts --port 3005",
     "build": "tsc",
     "start": "node dist/index.js",
     "deploy-commands": "tsx src/deploy-commands.ts",
@@ -16,6 +16,9 @@
     "discord.js": "^14.0.0",
     "dotenv": "^16.0.0",
     "pg": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
