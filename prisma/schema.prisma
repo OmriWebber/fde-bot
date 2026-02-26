@@ -56,18 +56,19 @@ model Season {
 }
 
 model Round {
-  id            String         @id @default(cuid())
+  id            String             @id @default(cuid())
   seasonId      String
-  season        Season         @relation(fields: [seasonId], references: [id])
+  season        Season             @relation(fields: [seasonId], references: [id])
   number        Int
   name          String
-  type          RoundType      @default(touge)
-  status        RoundStatus    @default(upcoming)
+  type          RoundType          @default(top32)
+  status        RoundStatus        @default(upcoming)
   scheduledAt   DateTime?
   venue         String?
-  createdAt     DateTime       @default(now())
+  createdAt     DateTime           @default(now())
   registrations Registration[]
   results       Result[]
+  tournament    BracketTournament?
 }
 
 model Registration {
@@ -93,9 +94,8 @@ model Result {
   roundId        String
   round          Round        @relation(fields: [roundId], references: [id])
   score          Float
+  line           Float?
   angle          Float?
-  proximity      Float?
-  speed          Float?
   style          Float?
   position       Int?
   createdAt      DateTime     @default(now())
@@ -111,6 +111,27 @@ model XpEvent {
   createdAt DateTime    @default(now())
 }
 
+model BracketTournament {
+  id        String               @id @default(cuid())
+  roundId   String               @unique
+  round     Round                @relation(fields: [roundId], references: [id])
+  size      Int
+  createdAt DateTime             @default(now())
+  matches   BracketMatchRecord[]
+}
+
+model BracketMatchRecord {
+  id            String            @id @default(cuid())
+  tournamentId  String
+  tournament    BracketTournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  roundNumber   Int
+  matchNumber   Int
+  leadDriverId  String?
+  chaseDriverId String?
+  winnerId      String?
+  createdAt     DateTime          @default(now())
+}
+
 enum SeasonStatus {
   draft
   active
@@ -118,9 +139,8 @@ enum SeasonStatus {
 }
 
 enum RoundType {
-  touge
-  circuit
-  wangan
+  top16
+  top32
 }
 
 enum RoundStatus {
