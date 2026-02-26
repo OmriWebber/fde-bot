@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Command } from "../types";
 import { prisma } from "../lib/db";
@@ -10,34 +10,37 @@ const data = new SlashCommandBuilder()
     opt
       .setName("gamertag")
       .setDescription("Your FDE gamertag")
-      .setRequired(true)
+      .setRequired(true),
   );
 
-async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
-  await interaction.deferReply({ ephemeral: true });
+async function execute(
+  interaction: ChatInputCommandInteraction,
+): Promise<void> {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const gamertag = interaction.options.getString("gamertag", true);
-  const platformUrl = process.env.PLATFORM_URL ?? "https://forzadriftevents.com";
+  const platformUrl =
+    process.env.PLATFORM_URL ?? "https://forzadriftevents.com";
 
   const driver = await prisma.driver.findUnique({ where: { gamertag } });
 
   if (!driver) {
     await interaction.editReply(
-      `No driver found with gamertag **${gamertag}**. Register at ${platformUrl}/register`
+      `No driver found with gamertag **${gamertag}**. Register at ${platformUrl}/register`,
     );
     return;
   }
 
   if (driver.discordId && driver.discordId !== interaction.user.id) {
     await interaction.editReply(
-      "This gamertag is already linked to a different Discord account."
+      "This gamertag is already linked to a different Discord account.",
     );
     return;
   }
 
   if (driver.discordId === interaction.user.id) {
     await interaction.editReply(
-      `Your account is already linked to **${gamertag}**.`
+      `Your account is already linked to **${gamertag}**.`,
     );
     return;
   }
@@ -48,7 +51,7 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
   });
 
   await interaction.editReply(
-    `Linked to **${gamertag}**. Welcome to the platform.`
+    `Linked to **${gamertag}**. Welcome to the platform.`,
   );
 }
 
