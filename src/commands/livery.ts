@@ -157,7 +157,7 @@ async function execute(
   }
 
   if (!response.ok) {
-    console.log("Failed to update livery:", await response.text());
+    console.log("Failed to update livery:", response);
     await interaction.editReply(
       `Failed to update livery (HTTP ${response.status}). Please try again later.`,
     );
