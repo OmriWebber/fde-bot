@@ -126,6 +126,7 @@ async function execute(
       { name: "Season", value: seasonName, inline: true },
       { name: "Bracket Link", value: bracketUrl },
     )
+    .setImage("/logo.png")
     .setURL(bracketUrl);
 
   await interaction.editReply({
