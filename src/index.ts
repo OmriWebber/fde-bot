@@ -8,6 +8,8 @@ import roundCommand from "./commands/round";
 import registerCommand from "./commands/register";
 import liveryCommand from "./commands/livery";
 import bracketCommand from "./commands/bracket";
+import checkinCommand from "./commands/checkin";
+import myStatusCommand from "./commands/my-status";
 
 import readyEvent from "./events/ready";
 import interactionCreateEvent from "./events/interactionCreate";
@@ -26,6 +28,8 @@ for (const command of [
   registerCommand,
   liveryCommand,
   bracketCommand,
+  checkinCommand,
+  myStatusCommand,
 ]) {
   client.commands.set(command.data.name, command);
 }
