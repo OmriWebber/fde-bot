@@ -1,4 +1,4 @@
-import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from "discord.js";
+import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Command } from "../types";
 import { getPlatformConfig, platformRequest } from "../lib/platform";
@@ -9,12 +9,13 @@ interface ApiErrorBody {
 }
 
 interface BracketResponseBody {
+  url?: string;
   imageUrl?: string;
 }
 
 const data = new SlashCommandBuilder()
   .setName("bracket")
-  .setDescription("Post the current season bracket snapshot")
+  .setDescription("Get a link to the live season bracket")
   .addStringOption((opt) =>
     opt
       .setName("round_id")
@@ -85,21 +86,15 @@ async function execute(
   }
 
   const payload = (await response.json()) as BracketResponseBody;
-  const imageUrl = payload.imageUrl?.trim();
+  const bracketUrl = payload.url?.trim() || payload.imageUrl?.trim();
 
-  if (!imageUrl) {
-    await interaction.editReply(
-      "HTTP 200 — Invalid response: missing imageUrl.",
-    );
+  if (!bracketUrl) {
+    await interaction.editReply("HTTP 200 — Invalid response: missing url.");
     return;
   }
 
-  const embed = new EmbedBuilder()
-    .setTitle("Season bracket snapshot")
-    .setImage(imageUrl);
-
   await interaction.editReply({
-    embeds: [embed],
+    content: `Live bracket\n${bracketUrl}`,
   });
 }
 
