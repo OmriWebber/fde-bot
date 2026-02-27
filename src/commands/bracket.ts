@@ -1,6 +1,10 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { AttachmentBuilder, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import {
+  AttachmentBuilder,
+  EmbedBuilder,
+  SlashCommandBuilder,
+} from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Command } from "../types";
 import { getPlatformConfig, platformRequest } from "../lib/platform";
@@ -138,7 +142,6 @@ async function execute(
   }
 
   await interaction.editReply({
-    content: bracketUrl,
     embeds: [embed],
     files: hasLogo
       ? [
