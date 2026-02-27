@@ -1,4 +1,6 @@
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { AttachmentBuilder, EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Command } from "../types";
 import { getPlatformConfig, platformRequest } from "../lib/platform";
@@ -126,11 +128,25 @@ async function execute(
       { name: "Season", value: seasonName, inline: true },
       { name: "Bracket Link", value: bracketUrl },
     )
-    .setImage("/logo.png")
     .setURL(bracketUrl);
 
+  const logoPath = resolve(process.cwd(), "public", "logo.png");
+  const hasLogo = existsSync(logoPath);
+
+  if (hasLogo) {
+    embed.setImage("attachment://logo.png");
+  }
+
   await interaction.editReply({
+    content: bracketUrl,
     embeds: [embed],
+    files: hasLogo
+      ? [
+          new AttachmentBuilder(logoPath, {
+            name: "logo.png",
+          }),
+        ]
+      : [],
   });
 }
 
