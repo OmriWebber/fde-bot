@@ -10,6 +10,12 @@ interface ApiErrorBody {
 
 interface BracketResponseBody {
   bracketUrl?: string;
+  round?: {
+    id?: string;
+    number?: number;
+    name?: string;
+    seasonName?: string;
+  };
 }
 
 const data = new SlashCommandBuilder()
@@ -34,7 +40,7 @@ function getErrorMessage(
 async function execute(
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
-  await interaction.deferReply();
+  await interaction.deferReply({ ephemeral: true });
 
   const { secret } = getPlatformConfig();
   if (!secret) {
@@ -94,23 +100,41 @@ async function execute(
 
   const payload = (await response.json()) as BracketResponseBody;
   const bracketUrl = payload.bracketUrl?.trim();
+  const round = payload.round;
+  const roundNumber = round?.number;
+  const roundName = round?.name?.trim();
+  const seasonName = round?.seasonName?.trim();
+  const roundIdValue = round?.id?.trim();
 
-  if (!bracketUrl) {
+  if (
+    !bracketUrl ||
+    typeof roundNumber !== "number" ||
+    !roundName ||
+    !seasonName ||
+    !roundIdValue
+  ) {
     await interaction.editReply(
-      "HTTP 200 — Invalid response: missing bracketUrl.",
+      "HTTP 200 — Invalid response: missing bracket metadata.",
     );
     return;
   }
 
   const embed = new EmbedBuilder()
-    .setTitle("Round bracket")
-    .setDescription("Live bracket link")
+    .setTitle(`Bracket · Round/${roundNumber}`)
+    .setDescription(roundName)
+    .addFields(
+      { name: "Season", value: seasonName, inline: true },
+      { name: "Round ID", value: roundIdValue, inline: true },
+      { name: "Bracket Link", value: bracketUrl },
+    )
     .setURL(bracketUrl);
 
-  await interaction.editReply({
+  await interaction.followUp({
     content: bracketUrl,
     embeds: [embed],
   });
+
+  await interaction.editReply("Posted bracket link.");
 }
 
 const command: Command = { data, execute };
