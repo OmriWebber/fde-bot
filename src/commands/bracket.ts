@@ -120,7 +120,7 @@ async function execute(
   }
 
   const embed = new EmbedBuilder()
-    .setTitle(`Bracket · Round ${roundNumber}`)
+    .setTitle(`Live Bracket · Round ${roundNumber}`)
     .setDescription(roundName)
     .addFields(
       { name: "Season", value: seasonName, inline: true },
