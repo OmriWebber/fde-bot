@@ -1,4 +1,4 @@
-import { AttachmentBuilder, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Command } from "../types";
 import { getPlatformConfig, platformRequest } from "../lib/platform";
@@ -8,6 +8,10 @@ interface ApiErrorBody {
   detail?: string;
 }
 
+interface BracketResponseBody {
+  imageUrl?: string;
+}
+
 const data = new SlashCommandBuilder()
   .setName("bracket")
   .setDescription("Post the current season bracket snapshot")
@@ -15,74 +19,64 @@ const data = new SlashCommandBuilder()
     opt
       .setName("round_id")
       .setDescription("Optional round id to fetch a specific bracket"),
+  )
+  .addBooleanOption((opt) =>
+    opt
+      .setName("refresh")
+      .setDescription("Force refresh of the bracket snapshot"),
   );
 
 function getErrorMessage(
   status: number,
   payload: ApiErrorBody,
-  fallbackText: string,
+  fallback: string,
 ): string {
-  const base = payload.error?.trim() || fallbackText;
+  const base = payload.error?.trim() || fallback;
   const detail = payload.detail?.trim();
-  return detail ? `${base}: ${detail}` : base;
+  return `HTTP ${status} — ${detail ? `${base}: ${detail}` : base}`;
 }
 
 async function execute(
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
-  await interaction.deferReply();
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const { secret } = getPlatformConfig();
   if (!secret) {
-    console.error("[bracket] BOT_WEBHOOK_SECRET is not configured");
     await interaction.editReply("BOT_WEBHOOK_SECRET is not configured.");
     return;
   }
 
   const roundId = interaction.options.getString("round_id") ?? undefined;
+  const refresh = interaction.options.getBoolean("refresh") ?? false;
 
-  console.info("[bracket] fetching bracket image", {
-    userId: interaction.user.id,
-    roundId: roundId ?? null,
-  });
-
-  const response = await platformRequest("/api/bot/bracket/image", {
+  const response = await platformRequest("/api/bot/bracket", {
     method: "GET",
-    query: { roundId },
-  });
-
-  console.info("[bracket] platform response", {
-    status: response.status,
-    contentType: response.headers.get("content-type"),
-    botErrorCode: response.headers.get("x-bot-error-code"),
+    query: {
+      roundId,
+      refresh: refresh ? "1" : undefined,
+    },
   });
 
   if (!response.ok) {
     const contentType = response.headers.get("content-type") ?? "";
-    let errorMessage = `Failed to fetch bracket (HTTP ${response.status}).`;
+    let errorMessage = `HTTP ${response.status} — Failed to fetch bracket.`;
 
     if (contentType.includes("application/json")) {
       try {
         const payload = (await response.json()) as ApiErrorBody;
-        console.error("[bracket] JSON error response", {
-          status: response.status,
+        errorMessage = getErrorMessage(
+          response.status,
           payload,
-        });
-        errorMessage = getErrorMessage(response.status, payload, errorMessage);
+          "Failed to fetch bracket.",
+        );
       } catch {
-        console.error("[bracket] failed to parse JSON error response", {
-          status: response.status,
-        });
         // Keep default message
       }
     } else {
       const bodyText = await response.text().catch(() => "");
-      console.error("[bracket] text error response", {
-        status: response.status,
-        body: bodyText,
-      });
       if (bodyText.trim()) {
-        errorMessage = `${errorMessage} ${bodyText.trim().slice(0, 200)}`;
+        errorMessage = `HTTP ${response.status} — ${bodyText.trim().slice(0, 200)}`;
       }
     }
 
@@ -90,19 +84,22 @@ async function execute(
     return;
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  console.info("[bracket] image fetched", {
-    bytes: arrayBuffer.byteLength,
-    roundId: roundId ?? null,
-  });
+  const payload = (await response.json()) as BracketResponseBody;
+  const imageUrl = payload.imageUrl?.trim();
 
-  const file = new AttachmentBuilder(Buffer.from(arrayBuffer), {
-    name: "bracket.png",
-  });
+  if (!imageUrl) {
+    await interaction.editReply(
+      "HTTP 200 — Invalid response: missing imageUrl.",
+    );
+    return;
+  }
+
+  const embed = new EmbedBuilder()
+    .setTitle("Season bracket snapshot")
+    .setImage(imageUrl);
 
   await interaction.editReply({
-    content: "Season bracket snapshot",
-    files: [file],
+    embeds: [embed],
   });
 }
 
