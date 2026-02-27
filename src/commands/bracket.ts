@@ -129,12 +129,10 @@ async function execute(
     )
     .setURL(bracketUrl);
 
-  await interaction.followUp({
+  await interaction.editReply({
     content: bracketUrl,
     embeds: [embed],
   });
-
-  await interaction.editReply("Posted bracket link.");
 }
 
 const command: Command = { data, execute };
