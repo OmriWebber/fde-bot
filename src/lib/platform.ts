@@ -3,6 +3,7 @@ interface PlatformRequestOptions {
   query?: Record<string, string | undefined>;
   headers?: Record<string, string>;
   body?: string;
+  signal?: AbortSignal;
 }
 
 export function getPlatformConfig(): {
@@ -38,5 +39,6 @@ export async function platformRequest(
     method: options.method ?? "GET",
     headers,
     body: options.body,
+    signal: options.signal,
   });
 }

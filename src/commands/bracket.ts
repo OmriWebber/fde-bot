@@ -1,4 +1,4 @@
-import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Command } from "../types";
 import { getPlatformConfig, platformRequest } from "../lib/platform";
@@ -9,8 +9,7 @@ interface ApiErrorBody {
 }
 
 interface BracketResponseBody {
-  url?: string;
-  imageUrl?: string;
+  bracketUrl?: string;
 }
 
 const data = new SlashCommandBuilder()
@@ -20,11 +19,6 @@ const data = new SlashCommandBuilder()
     opt
       .setName("round_id")
       .setDescription("Optional round id to fetch a specific bracket"),
-  )
-  .addBooleanOption((opt) =>
-    opt
-      .setName("refresh")
-      .setDescription("Force refresh of the bracket snapshot"),
   );
 
 function getErrorMessage(
@@ -49,15 +43,28 @@ async function execute(
   }
 
   const roundId = interaction.options.getString("round_id") ?? undefined;
-  const refresh = interaction.options.getBoolean("refresh") ?? false;
+  let response: Response;
 
-  const response = await platformRequest("/api/bot/bracket", {
-    method: "GET",
-    query: {
-      roundId,
-      refresh: refresh ? "1" : undefined,
-    },
-  });
+  try {
+    response = await platformRequest("/api/bot/bracket", {
+      method: "GET",
+      query: { roundId },
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (error: unknown) {
+    const errorName =
+      typeof error === "object" && error !== null && "name" in error
+        ? String((error as { name: unknown }).name)
+        : "Error";
+
+    const message =
+      errorName === "TimeoutError" || errorName === "AbortError"
+        ? "Request timed out while fetching bracket URL."
+        : "Network error while fetching bracket URL.";
+
+    await interaction.editReply(`HTTP 0 — ${message}`);
+    return;
+  }
 
   if (!response.ok) {
     const contentType = response.headers.get("content-type") ?? "";
@@ -86,16 +93,26 @@ async function execute(
   }
 
   const payload = (await response.json()) as BracketResponseBody;
-  const bracketUrl = payload.url?.trim() || payload.imageUrl?.trim();
+  const bracketUrl = payload.bracketUrl?.trim();
 
   if (!bracketUrl) {
-    await interaction.editReply("HTTP 200 — Invalid response: missing url.");
+    await interaction.editReply(
+      "HTTP 200 — Invalid response: missing bracketUrl.",
+    );
     return;
   }
 
-  await interaction.editReply({
-    content: `Live bracket\n${bracketUrl}`,
+  const embed = new EmbedBuilder()
+    .setTitle("Season bracket")
+    .setDescription("Live bracket link")
+    .setURL(bracketUrl);
+
+  await interaction.followUp({
+    content: bracketUrl,
+    embeds: [embed],
   });
+
+  await interaction.editReply("Posted live bracket link.");
 }
 
 const command: Command = { data, execute };
