@@ -7,6 +7,7 @@ import profileCommand from "./commands/profile";
 import roundCommand from "./commands/round";
 import registerCommand from "./commands/register";
 import liveryCommand from "./commands/livery";
+import bracketCommand from "./commands/bracket";
 
 import readyEvent from "./events/ready";
 import interactionCreateEvent from "./events/interactionCreate";
@@ -24,6 +25,7 @@ for (const command of [
   roundCommand,
   registerCommand,
   liveryCommand,
+  bracketCommand,
 ]) {
   client.commands.set(command.data.name, command);
 }

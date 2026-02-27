@@ -6,6 +6,7 @@ import profileCommand from "./commands/profile";
 import roundCommand from "./commands/round";
 import registerCommand from "./commands/register";
 import liveryCommand from "./commands/livery";
+import bracketCommand from "./commands/bracket";
 
 async function main(): Promise<void> {
   const token = process.env.DISCORD_TOKEN;
@@ -23,6 +24,7 @@ async function main(): Promise<void> {
     roundCommand,
     registerCommand,
     liveryCommand,
+    bracketCommand,
   ].map((c) => c.data.toJSON());
 
   const rest = new REST().setToken(token);

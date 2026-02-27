@@ -4,6 +4,7 @@ import type {
   ChatInputCommandInteraction,
 } from "discord.js";
 import type { Command } from "../types";
+import { getPlatformConfig, platformRequest } from "../lib/platform";
 
 interface CarsResponse {
   cars: Array<{
@@ -42,16 +43,6 @@ const data = new SlashCommandBuilder()
       .setRequired(true),
   );
 
-function getConfig(): {
-  platformUrl: string;
-  secret: string | null;
-} {
-  return {
-    platformUrl: process.env.PLATFORM_URL ?? "https://forzadriftevents.com",
-    secret: process.env.BOT_WEBHOOK_SECRET ?? null,
-  };
-}
-
 function isHttpUrl(value: string): boolean {
   try {
     const parsed = new URL(value);
@@ -64,20 +55,12 @@ function isHttpUrl(value: string): boolean {
 async function fetchOwnedCars(
   discordId: string,
 ): Promise<CarsResponse["cars"]> {
-  const { platformUrl, secret } = getConfig();
+  const { secret } = getPlatformConfig();
   if (!secret) return [];
-
-  const url = new URL("/api/bot/cars", platformUrl);
-  url.searchParams.set("discordId", discordId);
-
-  const response = await fetch(url.toString(), {
+  const response = await platformRequest("/api/bot/cars", {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${secret}`,
-    },
+    query: { discordId },
   });
-
-  console.log("Fetched cars response:", response);
 
   if (!response.ok) return [];
 
@@ -90,24 +73,17 @@ async function fetchAutocompleteChoices(
   discordId: string,
   query: string,
 ): Promise<DiscordChoicesResponse["choices"]> {
-  const { platformUrl, secret } = getConfig();
+  const { secret } = getPlatformConfig();
   if (!secret) return [];
 
-  const url = new URL("/api/bot/cars", platformUrl);
-  url.searchParams.set("discordId", discordId);
-  url.searchParams.set("format", "discord_choices");
-  if (query) {
-    url.searchParams.set("query", query);
-  }
-
-  const response = await fetch(url.toString(), {
+  const response = await platformRequest("/api/bot/cars", {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${secret}`,
+    query: {
+      discordId,
+      format: "discord_choices",
+      query: query || undefined,
     },
   });
-
-  console.log("Fetched autocomplete choices response:", response);
 
   if (!response.ok) return [];
 
@@ -189,7 +165,7 @@ async function execute(
 ): Promise<void> {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const { platformUrl, secret } = getConfig();
+  const { secret } = getPlatformConfig();
   if (!secret) {
     await interaction.editReply("BOT_WEBHOOK_SECRET is not configured.");
     return;
@@ -203,14 +179,9 @@ async function execute(
     return;
   }
 
-  const endpoint = new URL("/api/bot/livery", platformUrl);
-
-  const response = await fetch(endpoint.toString(), {
+  const response = await platformRequest("/api/bot/livery", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${secret}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       discordId: interaction.user.id,
       carId,
