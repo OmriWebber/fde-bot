@@ -129,7 +129,6 @@ async function execute(
     .setURL(bracketUrl);
 
   await interaction.editReply({
-    content: bracketUrl,
     embeds: [embed],
   });
 }
