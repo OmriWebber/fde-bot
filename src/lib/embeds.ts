@@ -32,7 +32,7 @@ export function buildLeaderboardEmbed(
 
   return new EmbedBuilder()
     .setColor(COLOUR_GOLD)
-    .setTitle(`Season/${season.name} — Standings`)
+    .setTitle(`${season.name} — Standings`)
     .setDescription(lines.join("\n") || "No results yet.")
     .setFooter({
       text: `Updated ${new Date().toUTCString()} · ${PLATFORM_URL}/leaderboard`,
@@ -102,7 +102,7 @@ interface RoundWithRelations {
 export function buildRoundEmbed(round: RoundWithRelations): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setColor(COLOUR_RED)
-    .setTitle(`${round.season.name} · Round/${round.number} — ${round.name}`)
+    .setTitle(`${round.season.name} · Round ${round.number} — ${round.name}`)
     .addFields(
       { name: "Type", value: capitalise(round.type), inline: true },
       { name: "Status", value: capitalise(round.status), inline: true },

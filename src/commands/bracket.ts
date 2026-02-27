@@ -8,6 +8,7 @@ import {
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Command } from "../types";
 import { getPlatformConfig, platformRequest } from "../lib/platform";
+import { COLOUR_RED } from "../lib/embeds";
 
 interface ApiErrorBody {
   error?: string;
@@ -128,6 +129,7 @@ async function execute(
   const embed = new EmbedBuilder()
     .setTitle(`Live Bracket · Round ${roundNumber}`)
     .setDescription(roundName)
+    .setColor(COLOUR_RED)
     .addFields(
       { name: "Season", value: seasonName, inline: true },
       { name: "Bracket Link", value: bracketUrl },
