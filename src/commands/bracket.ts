@@ -103,7 +103,7 @@ async function execute(
   }
 
   const embed = new EmbedBuilder()
-    .setTitle("Season bracket")
+    .setTitle("Round bracket")
     .setDescription("Live bracket link")
     .setURL(bracketUrl);
 
