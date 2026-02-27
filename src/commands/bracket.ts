@@ -40,7 +40,7 @@ function getErrorMessage(
 async function execute(
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply();
 
   const { secret } = getPlatformConfig();
   if (!secret) {
@@ -120,11 +120,10 @@ async function execute(
   }
 
   const embed = new EmbedBuilder()
-    .setTitle(`Bracket · Round/${roundNumber}`)
+    .setTitle(`Bracket · Round ${roundNumber}`)
     .setDescription(roundName)
     .addFields(
       { name: "Season", value: seasonName, inline: true },
-      { name: "Round ID", value: roundIdValue, inline: true },
       { name: "Bracket Link", value: bracketUrl },
     )
     .setURL(bracketUrl);
