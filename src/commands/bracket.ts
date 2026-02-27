@@ -1,4 +1,4 @@
-import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Command } from "../types";
 import { getPlatformConfig, platformRequest } from "../lib/platform";
@@ -34,7 +34,7 @@ function getErrorMessage(
 async function execute(
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
-  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  await interaction.deferReply();
 
   const { secret } = getPlatformConfig();
   if (!secret) {
@@ -107,12 +107,10 @@ async function execute(
     .setDescription("Live bracket link")
     .setURL(bracketUrl);
 
-  await interaction.followUp({
+  await interaction.editReply({
     content: bracketUrl,
     embeds: [embed],
   });
-
-  await interaction.editReply("Posted live bracket link.");
 }
 
 const command: Command = { data, execute };
