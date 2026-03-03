@@ -9,6 +9,17 @@ import liveryCommand from "./commands/livery";
 import bracketCommand from "./commands/bracket";
 import checkinCommand from "./commands/checkin";
 import myStatusCommand from "./commands/my-status";
+import seasonCommand from "./commands/season";
+import scheduleCommand from "./commands/schedule";
+import standingsDeltaCommand from "./commands/standings-delta";
+import compareCommand from "./commands/compare";
+import resultsCommand from "./commands/results";
+import streaksCommand from "./commands/streaks";
+import consistencyCommand from "./commands/consistency";
+import xpHistoryCommand from "./commands/xp-history";
+import remindersCommand from "./commands/reminders";
+import announceRoundCommand from "./commands/announce-round";
+import refreshCacheCommand from "./commands/refresh-cache";
 
 async function main(): Promise<void> {
   const token = process.env.DISCORD_TOKEN;
@@ -29,6 +40,17 @@ async function main(): Promise<void> {
     bracketCommand,
     checkinCommand,
     myStatusCommand,
+    seasonCommand,
+    scheduleCommand,
+    standingsDeltaCommand,
+    compareCommand,
+    resultsCommand,
+    streaksCommand,
+    consistencyCommand,
+    xpHistoryCommand,
+    remindersCommand,
+    announceRoundCommand,
+    refreshCacheCommand,
   ].map((c) => c.data.toJSON());
 
   const rest = new REST().setToken(token);

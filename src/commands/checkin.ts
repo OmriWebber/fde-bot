@@ -59,6 +59,7 @@ async function execute(
       httpStatus: result.status,
       code: result.code,
       retryable: result.retryable,
+      requestId: result.requestId,
     });
     await interaction.editReply(result.message);
     return;

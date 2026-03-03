@@ -1,4 +1,8 @@
-import { platformRequest } from "../lib/platform";
+import {
+  getPlatformErrorRequestId,
+  getPlatformRequestId,
+  platformRequest,
+} from "../lib/platform";
 
 export type ParticipationStatus = "confirmed" | "pending" | "dns" | "dq";
 
@@ -41,6 +45,7 @@ export interface ParticipationFailure {
   ok: false;
   status: number;
   code?: string;
+  requestId?: string;
   message: string;
   retryable: boolean;
 }
@@ -154,6 +159,7 @@ export async function submitParticipationCheckin(
       ok: false,
       status: 0,
       code: timedOut ? "TIMEOUT" : "NETWORK_ERROR",
+      requestId: getPlatformErrorRequestId(error),
       message: timedOut
         ? "Check-in request timed out. Please try again."
         : "Could not reach the platform API. Please try again.",
@@ -187,6 +193,7 @@ export async function submitParticipationCheckin(
       ok: false,
       status: response.status,
       code: errorCode,
+      requestId: getPlatformRequestId(response),
       message: mapParticipationErrorCodeToMessage(
         response.status,
         errorCode,
@@ -211,6 +218,7 @@ export async function submitParticipationCheckin(
         ok: false,
         status: 200,
         code: "INVALID_RESPONSE",
+        requestId: getPlatformRequestId(response),
         message: "HTTP 200 — Invalid response from participation API.",
         retryable: false,
       };
@@ -222,6 +230,7 @@ export async function submitParticipationCheckin(
       ok: false,
       status: 200,
       code: "INVALID_RESPONSE",
+      requestId: getPlatformRequestId(response),
       message: "HTTP 200 — Invalid response from participation API.",
       retryable: false,
     };

@@ -134,7 +134,6 @@ async function autocomplete(
     }
 
     const cars = await fetchOwnedCars(interaction.user.id);
-    console.log("Fetched cars:", cars);
     const fallbackChoices = cars
       .filter((car) => {
         if (!focused) return true;

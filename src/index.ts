@@ -10,6 +10,17 @@ import liveryCommand from "./commands/livery";
 import bracketCommand from "./commands/bracket";
 import checkinCommand from "./commands/checkin";
 import myStatusCommand from "./commands/my-status";
+import seasonCommand from "./commands/season";
+import scheduleCommand from "./commands/schedule";
+import standingsDeltaCommand from "./commands/standings-delta";
+import compareCommand from "./commands/compare";
+import resultsCommand from "./commands/results";
+import streaksCommand from "./commands/streaks";
+import consistencyCommand from "./commands/consistency";
+import xpHistoryCommand from "./commands/xp-history";
+import remindersCommand from "./commands/reminders";
+import announceRoundCommand from "./commands/announce-round";
+import refreshCacheCommand from "./commands/refresh-cache";
 
 import readyEvent from "./events/ready";
 import interactionCreateEvent from "./events/interactionCreate";
@@ -30,6 +41,17 @@ for (const command of [
   bracketCommand,
   checkinCommand,
   myStatusCommand,
+  seasonCommand,
+  scheduleCommand,
+  standingsDeltaCommand,
+  compareCommand,
+  resultsCommand,
+  streaksCommand,
+  consistencyCommand,
+  xpHistoryCommand,
+  remindersCommand,
+  announceRoundCommand,
+  refreshCacheCommand,
 ]) {
   client.commands.set(command.data.name, command);
 }
