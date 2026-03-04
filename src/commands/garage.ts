@@ -25,18 +25,43 @@ const data = new SlashCommandBuilder()
       .setName("add")
       .setDescription("Add a new car to your garage")
       .addStringOption((opt) =>
-        opt.setName("make").setDescription("Car make").setRequired(true),
+        opt
+          .setName("car")
+          .setDescription("Car name (example: 2020 Shelby GT500)")
+          .setRequired(true),
       )
       .addStringOption((opt) =>
-        opt.setName("model").setDescription("Car model").setRequired(true),
-      )
-      .addIntegerOption((opt) =>
         opt
-          .setName("year")
-          .setDescription("Car production year")
-          .setRequired(true)
-          .setMinValue(1950)
-          .setMaxValue(2100),
+          .setName("pi")
+          .setDescription("Class and PI (example: S1 900)")
+          .setRequired(true),
+      )
+      .addStringOption((opt) =>
+        opt
+          .setName("power")
+          .setDescription("Power and torque spec")
+          .setRequired(true),
+      )
+      .addStringOption((opt) =>
+        opt.setName("weight").setDescription("Weight spec").setRequired(true),
+      )
+      .addStringOption((opt) =>
+        opt
+          .setName("tire_compound")
+          .setDescription("Tire compound")
+          .setRequired(true),
+      )
+      .addStringOption((opt) =>
+        opt
+          .setName("tire_width_front")
+          .setDescription("Front tire width (example: 305 mm)")
+          .setRequired(true),
+      )
+      .addStringOption((opt) =>
+        opt
+          .setName("tire_width_rear")
+          .setDescription("Rear tire width (example: 325 mm)")
+          .setRequired(true),
       )
       .addStringOption((opt) =>
         opt.setName("number").setDescription("Optional driver number"),
@@ -53,16 +78,28 @@ const data = new SlashCommandBuilder()
           .setRequired(true)
           .setAutocomplete(true),
       )
-      .addStringOption((opt) => opt.setName("make").setDescription("New make"))
       .addStringOption((opt) =>
-        opt.setName("model").setDescription("New model"),
-      )
-      .addIntegerOption((opt) =>
         opt
-          .setName("year")
-          .setDescription("New year")
-          .setMinValue(1950)
-          .setMaxValue(2100),
+          .setName("car")
+          .setDescription("New car name (example: 2020 Shelby GT500)"),
+      )
+      .addStringOption((opt) =>
+        opt.setName("pi").setDescription("New PI (example: S1 900)"),
+      )
+      .addStringOption((opt) =>
+        opt.setName("power").setDescription("New power and torque spec"),
+      )
+      .addStringOption((opt) =>
+        opt.setName("weight").setDescription("New weight spec"),
+      )
+      .addStringOption((opt) =>
+        opt.setName("tire_compound").setDescription("New tire compound"),
+      )
+      .addStringOption((opt) =>
+        opt.setName("tire_width_front").setDescription("New front tire width"),
+      )
+      .addStringOption((opt) =>
+        opt.setName("tire_width_rear").setDescription("New rear tire width"),
       )
       .addStringOption((opt) =>
         opt
@@ -151,13 +188,27 @@ async function handleView(
   }
 
   const lines = result.data.cars.map((car, index) => {
-    return `${index + 1}. ${formatGarageCarLabel(car)} · ID: ${car.id}`;
+    const piText = car.PI ?? "N/A";
+    const powerText = car.power ?? "N/A";
+    const weightText = car.weight ?? "N/A";
+    const tireCompoundText = car.tireCompound ?? "N/A";
+    const tireWidthFront = car.tireWidths?.front ?? "N/A";
+    const tireWidthRear = car.tireWidths?.rear ?? "N/A";
+
+    return [
+      `${index + 1}. ${formatGarageCarLabel(car)} · ID: ${car.id}`,
+      `PI: ${piText}`,
+      `Power: ${powerText}`,
+      `Weight: ${weightText}`,
+      `Tire Compound: ${tireCompoundText}`,
+      `Tire Widths: F ${tireWidthFront} / R ${tireWidthRear}`,
+    ].join("\n");
   });
 
   const embed = new EmbedBuilder()
     .setTitle("Your Garage")
     .setDescription(
-      lines.length > 0 ? lines.join("\n") : "You have no cars yet.",
+      lines.length > 0 ? lines.join("\n\n") : "You have no cars yet.",
     );
 
   await interaction.editReply({ embeds: [embed] });
@@ -166,17 +217,33 @@ async function handleView(
 async function handleAdd(
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
-  const make = interaction.options.getString("make", true).trim();
-  const model = interaction.options.getString("model", true).trim();
-  const year = interaction.options.getInteger("year", true);
+  const car = interaction.options.getString("car", true).trim();
+  const PI = interaction.options.getString("pi", true).trim();
+  const power = interaction.options.getString("power", true).trim();
+  const weight = interaction.options.getString("weight", true).trim();
+  const tireCompound = interaction.options
+    .getString("tire_compound", true)
+    .trim();
+  const tireWidthFront = interaction.options
+    .getString("tire_width_front", true)
+    .trim();
+  const tireWidthRear = interaction.options
+    .getString("tire_width_rear", true)
+    .trim();
   const numberInput = interaction.options.getString("number");
   const number = numberInput?.trim() ? numberInput.trim() : null;
 
   const result = await createGarageCar({
     discordId: interaction.user.id,
-    make,
-    model,
-    year,
+    car,
+    PI,
+    power,
+    weight,
+    tireCompound,
+    tireWidths: {
+      front: tireWidthFront,
+      rear: tireWidthRear,
+    },
     number,
   });
 
@@ -187,9 +254,8 @@ async function handleAdd(
       retryable: result.retryable,
       requestId: result.requestId,
       discordId: interaction.user.id,
-      make,
-      model,
-      year,
+      car,
+      PI,
     });
     await interaction.editReply(result.message);
     return;
@@ -204,9 +270,17 @@ async function handleUpdate(
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
   const carId = interaction.options.getString("car_id", true);
-  const make = interaction.options.getString("make")?.trim();
-  const model = interaction.options.getString("model")?.trim();
-  const year = interaction.options.getInteger("year") ?? undefined;
+  const car = interaction.options.getString("car")?.trim();
+  const PI = interaction.options.getString("pi")?.trim();
+  const power = interaction.options.getString("power")?.trim();
+  const weight = interaction.options.getString("weight")?.trim();
+  const tireCompound = interaction.options.getString("tire_compound")?.trim();
+  const tireWidthFront = interaction.options
+    .getString("tire_width_front")
+    ?.trim();
+  const tireWidthRear = interaction.options
+    .getString("tire_width_rear")
+    ?.trim();
   const numberInput = interaction.options.getString("number");
   const number =
     numberInput === null
@@ -215,24 +289,36 @@ async function handleUpdate(
         ? null
         : numberInput.trim() || undefined;
 
+  const tireWidths =
+    tireWidthFront !== undefined || tireWidthRear !== undefined
+      ? {
+          front: tireWidthFront,
+          rear: tireWidthRear,
+        }
+      : undefined;
+
   if (
-    make === undefined &&
-    model === undefined &&
-    year === undefined &&
+    car === undefined &&
+    PI === undefined &&
+    power === undefined &&
+    weight === undefined &&
+    tireCompound === undefined &&
+    tireWidths === undefined &&
     number === undefined
   ) {
-    await interaction.editReply(
-      "Provide at least one field to update: make, model, year, or number.",
-    );
+    await interaction.editReply("Provide at least one field to update.");
     return;
   }
 
   const result = await updateGarageCar({
     discordId: interaction.user.id,
     carId,
-    make,
-    model,
-    year,
+    car,
+    PI,
+    power,
+    weight,
+    tireCompound,
+    tireWidths,
     number,
   });
 

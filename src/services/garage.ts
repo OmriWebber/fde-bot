@@ -28,9 +28,18 @@ export type ServiceResult<TData> = ServiceSuccess<TData> | ServiceFailure;
 
 export interface GarageCar {
   id: string;
-  make: string;
-  model: string;
-  year: number;
+  car?: string;
+  PI?: string;
+  power?: string;
+  weight?: string;
+  tireCompound?: string;
+  tireWidths?: {
+    front: string;
+    rear: string;
+  } | null;
+  make?: string;
+  model?: string;
+  year?: number;
   number: string | null;
   liveryUrl?: string | null;
 }
@@ -45,18 +54,30 @@ export interface GarageCarMutationResponse {
 
 export interface CreateGarageCarInput {
   discordId: string;
-  make: string;
-  model: string;
-  year: number;
+  car: string;
+  PI: string;
+  power: string;
+  weight: string;
+  tireCompound: string;
+  tireWidths: {
+    front: string;
+    rear: string;
+  };
   number?: string | null;
 }
 
 export interface UpdateGarageCarInput {
   discordId: string;
   carId: string;
-  make?: string;
-  model?: string;
-  year?: number;
+  car?: string;
+  PI?: string;
+  power?: string;
+  weight?: string;
+  tireCompound?: string;
+  tireWidths?: {
+    front?: string;
+    rear?: string;
+  };
   number?: string | null;
 }
 
@@ -66,8 +87,16 @@ export interface RemoveGarageCarInput {
 }
 
 export function formatGarageCarLabel(car: GarageCar): string {
+  if (car.car && car.car.trim().length > 0) {
+    const numberPart = car.number ? ` #${car.number}` : "";
+    return `${car.car}${numberPart}`;
+  }
+
   const numberPart = car.number ? ` #${car.number}` : "";
-  return `${car.year} ${car.make} ${car.model}${numberPart}`;
+  const yearPart = typeof car.year === "number" ? `${car.year} ` : "";
+  const makePart = car.make ?? "";
+  const modelPart = car.model ? ` ${car.model}` : "";
+  return `${yearPart}${makePart}${modelPart}${numberPart}`.trim();
 }
 
 export function mapGarageApiError(
@@ -158,9 +187,11 @@ async function parseError(
 }
 
 function hasValidCarShape(car: GarageCar): boolean {
-  return Boolean(
-    car?.id && car.make && car.model && typeof car.year === "number",
+  const hasLegacyName = Boolean(
+    car.make && car.model && typeof car.year === "number",
   );
+  const hasSpecName = Boolean(car.car && car.car.trim().length > 0);
+  return Boolean(car?.id && (hasLegacyName || hasSpecName));
 }
 
 export async function fetchGarageCars(

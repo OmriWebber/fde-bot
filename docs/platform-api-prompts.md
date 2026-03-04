@@ -489,12 +489,28 @@ Response (200):
 ```json
 {
   "discordId": "...",
-  "make": "Nissan",
-  "model": "Silvia S15",
-  "year": 2002,
+  "car": "2020 Shelby GT500",
+  "PI": "S1 900",
+  "power": "Supercharged Stock 5.2L V8 1003hp/825 ft-lb torque",
+  "weight": "3255 lbs",
+  "tireCompound": "Semi-Slick",
+  "tireWidths": {
+    "front": "305 mm",
+    "rear": "325 mm"
+  },
   "number": "77"
 }
 ```
+
+Required fields for car creation:
+
+- `car`
+- `PI`
+- `power`
+- `weight`
+- `tireCompound`
+- `tireWidths.front`
+- `tireWidths.rear`
 
 Response (200):
 
@@ -502,6 +518,15 @@ Response (200):
 {
   "car": {
     "id": "...",
+    "car": "2020 Shelby GT500",
+    "PI": "S1 900",
+    "power": "Supercharged Stock 5.2L V8 1003hp/825 ft-lb torque",
+    "weight": "3255 lbs",
+    "tireCompound": "Semi-Slick",
+    "tireWidths": {
+      "front": "305 mm",
+      "rear": "325 mm"
+    },
     "make": "Nissan",
     "model": "Silvia S15",
     "year": 2002,
@@ -520,9 +545,15 @@ Response (200):
 {
   "discordId": "...",
   "carId": "...",
-  "make": "Nissan",
-  "model": "Silvia S15",
-  "year": 2002,
+  "car": "2020 Shelby GT500",
+  "PI": "S1 900",
+  "power": "Supercharged Stock 5.2L V8 1003hp/825 ft-lb torque",
+  "weight": "3255 lbs",
+  "tireCompound": "Semi-Slick",
+  "tireWidths": {
+    "front": "305 mm",
+    "rear": "325 mm"
+  },
   "number": null
 }
 ```
@@ -530,7 +561,7 @@ Response (200):
 Rules:
 
 - `carId` required.
-- At least one mutable field (`make`, `model`, `year`, `number`) must be provided.
+- At least one mutable field (`car`, `PI`, `power`, `weight`, `tireCompound`, `tireWidths`, `number`) must be provided.
 - `number: null` clears the number.
 
 Response (200):
@@ -539,6 +570,15 @@ Response (200):
 {
   "car": {
     "id": "...",
+    "car": "2020 Shelby GT500",
+    "PI": "S1 900",
+    "power": "Supercharged Stock 5.2L V8 1003hp/825 ft-lb torque",
+    "weight": "3255 lbs",
+    "tireCompound": "Semi-Slick",
+    "tireWidths": {
+      "front": "305 mm",
+      "rear": "325 mm"
+    },
     "make": "Nissan",
     "model": "Silvia S15",
     "year": 2002,
