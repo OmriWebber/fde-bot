@@ -20,6 +20,7 @@ import xpHistoryCommand from "./commands/xp-history";
 import remindersCommand from "./commands/reminders";
 import announceRoundCommand from "./commands/announce-round";
 import refreshCacheCommand from "./commands/refresh-cache";
+import garageCommand from "./commands/garage";
 
 async function main(): Promise<void> {
   const token = process.env.DISCORD_TOKEN;
@@ -51,6 +52,7 @@ async function main(): Promise<void> {
     remindersCommand,
     announceRoundCommand,
     refreshCacheCommand,
+    garageCommand,
   ].map((c) => c.data.toJSON());
 
   const rest = new REST().setToken(token);

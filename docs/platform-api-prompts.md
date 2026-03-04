@@ -448,3 +448,137 @@ Implement:
 - `FORBIDDEN`
 - `INVALID_QUERY`
 - `INTERNAL_ERROR`
+
+---
+
+## Prompt L — Garage CRUD Routes
+
+Implement bot-authenticated garage routes for Discord users:
+
+- Base path: `/api/bot/cars`
+- Auth: `Authorization: Bearer ${BOT_WEBHOOK_SECRET}` (fallback `x-bot-secret` accepted)
+- All routes must resolve user by `discordId` and only allow access to that user’s own cars.
+
+### 1) View garage cars
+
+- Method: `GET`
+- Query: `discordId`
+
+Response (200):
+
+```json
+{
+  "cars": [
+    {
+      "id": "...",
+      "make": "Nissan",
+      "model": "Silvia S15",
+      "year": 2002,
+      "number": "77",
+      "liveryUrl": "https://..."
+    }
+  ]
+}
+```
+
+### 2) Add car
+
+- Method: `POST`
+- Body:
+
+```json
+{
+  "discordId": "...",
+  "make": "Nissan",
+  "model": "Silvia S15",
+  "year": 2002,
+  "number": "77"
+}
+```
+
+Response (200):
+
+```json
+{
+  "car": {
+    "id": "...",
+    "make": "Nissan",
+    "model": "Silvia S15",
+    "year": 2002,
+    "number": "77",
+    "liveryUrl": null
+  }
+}
+```
+
+### 3) Update car
+
+- Method: `PATCH`
+- Body:
+
+```json
+{
+  "discordId": "...",
+  "carId": "...",
+  "make": "Nissan",
+  "model": "Silvia S15",
+  "year": 2002,
+  "number": null
+}
+```
+
+Rules:
+
+- `carId` required.
+- At least one mutable field (`make`, `model`, `year`, `number`) must be provided.
+- `number: null` clears the number.
+
+Response (200):
+
+```json
+{
+  "car": {
+    "id": "...",
+    "make": "Nissan",
+    "model": "Silvia S15",
+    "year": 2002,
+    "number": null,
+    "liveryUrl": "https://..."
+  }
+}
+```
+
+### 4) Remove car
+
+- Method: `DELETE`
+- Body:
+
+```json
+{
+  "discordId": "...",
+  "carId": "..."
+}
+```
+
+Response (200):
+
+```json
+{
+  "ok": true
+}
+```
+
+### Error shape
+
+```json
+{ "error": "...", "detail": "...", "code": "..." }
+```
+
+Use codes:
+
+- `UNAUTHORIZED`
+- `DRIVER_NOT_LINKED`
+- `CAR_NOT_OWNED`
+- `CAR_NOT_FOUND`
+- `INVALID_QUERY`
+- `INTERNAL_ERROR`

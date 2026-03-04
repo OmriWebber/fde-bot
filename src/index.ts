@@ -21,6 +21,7 @@ import xpHistoryCommand from "./commands/xp-history";
 import remindersCommand from "./commands/reminders";
 import announceRoundCommand from "./commands/announce-round";
 import refreshCacheCommand from "./commands/refresh-cache";
+import garageCommand from "./commands/garage";
 
 import readyEvent from "./events/ready";
 import interactionCreateEvent from "./events/interactionCreate";
@@ -52,6 +53,7 @@ for (const command of [
   remindersCommand,
   announceRoundCommand,
   refreshCacheCommand,
+  garageCommand,
 ]) {
   client.commands.set(command.data.name, command);
 }
