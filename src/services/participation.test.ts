@@ -42,6 +42,30 @@ test("mapParticipationErrorCodeToMessage maps unauthorized", () => {
   );
 });
 
+test("mapParticipationErrorCodeToMessage maps driver car required", () => {
+  assert.equal(
+    mapParticipationErrorCodeToMessage(
+      409,
+      "DRIVER_CAR_REQUIRED",
+      "Check-in failed.",
+      undefined,
+    ),
+    "Please select one of your registered cars to complete check-in.",
+  );
+});
+
+test("mapParticipationErrorCodeToMessage maps car not owned", () => {
+  assert.equal(
+    mapParticipationErrorCodeToMessage(
+      403,
+      "CAR_NOT_OWNED",
+      "Check-in failed.",
+      undefined,
+    ),
+    "The selected car is not in your garage.",
+  );
+});
+
 test("mapParticipationErrorCodeToMessage falls back to HTTP + detail", () => {
   assert.equal(
     mapParticipationErrorCodeToMessage(

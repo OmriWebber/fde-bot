@@ -9,8 +9,17 @@ export type ParticipationStatus = "confirmed" | "pending" | "dns" | "dq";
 export interface ParticipationCheckinInput {
   discordId: string;
   roundId?: string;
+  carId?: string;
   status?: ParticipationStatus;
   timeoutMs?: number;
+}
+
+export interface ParticipationCar {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  number: string | null;
 }
 
 export interface ParticipationCheckinSuccess {
@@ -33,6 +42,8 @@ export interface ParticipationCheckinSuccess {
     roundId: string;
     driverId: string;
   };
+  cars?: ParticipationCar[];
+  selectedCarId?: string | null;
 }
 
 interface ParticipationApiError {
@@ -103,6 +114,14 @@ export function mapParticipationErrorCodeToMessage(
     return "Your Discord account is not linked. Use /register first.";
   }
 
+  if (code === "DRIVER_CAR_REQUIRED") {
+    return "Please select one of your registered cars to complete check-in.";
+  }
+
+  if (code === "CAR_NOT_OWNED") {
+    return "The selected car is not in your garage.";
+  }
+
   if (code === "ROUND_NOT_AVAILABLE") {
     return "That round is not available for check-in right now.";
   }
@@ -144,6 +163,7 @@ export async function submitParticipationCheckin(
       body: JSON.stringify({
         discordId: input.discordId,
         roundId: input.roundId,
+        carId: input.carId,
         status,
       }),
       signal: AbortSignal.timeout(input.timeoutMs ?? 8000),
