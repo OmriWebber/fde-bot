@@ -46,7 +46,7 @@ async function execute(
         : "No standings delta data available.",
     )
     .setFooter({
-      text: `After Round/${result.data.sourceRound.number}`,
+      text: `After Round ${result.data.sourceRound.number}`,
     });
 
   await interaction.editReply({ embeds: [embed] });

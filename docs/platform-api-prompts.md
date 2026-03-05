@@ -380,6 +380,8 @@ Implement update route:
 
 ## Prompt J — Admin Announce Round Route (Phase 4)
 
+> Note: bot behavior has been updated to publish Discord announcements directly after fetching current round data from `/api/bot/season/summary`. Use this admin route only if you still want platform-side publishing.
+
 Implement:
 
 - Method: `POST`

@@ -40,7 +40,7 @@ async function execute(
 
   const embed = new EmbedBuilder()
     .setTitle(
-      `${result.data.season.name} · Round/${result.data.round.number} — ${result.data.round.name}`,
+      `${result.data.season.name} · Round ${result.data.round.number} — ${result.data.round.name}`,
     )
     .setDescription(
       topLines.length > 0 ? topLines.join("\n") : "No results posted yet.",

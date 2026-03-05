@@ -256,3 +256,105 @@ export async function submitParticipationCheckin(
     };
   }
 }
+
+export async function fetchCurrentParticipationStatus(
+  discordId: string,
+  roundId?: string,
+  timeoutMs = 8000,
+): Promise<ParticipationResult> {
+  let response: Response;
+
+  try {
+    response = await platformRequest("/api/bot/participation", {
+      method: "GET",
+      query: { discordId, roundId },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (error: unknown) {
+    const errorName =
+      typeof error === "object" && error !== null && "name" in error
+        ? String((error as { name: unknown }).name)
+        : "Error";
+
+    const timedOut = errorName === "TimeoutError" || errorName === "AbortError";
+    return {
+      ok: false,
+      status: 0,
+      code: timedOut ? "TIMEOUT" : "NETWORK_ERROR",
+      requestId: getPlatformErrorRequestId(error),
+      message: timedOut
+        ? "Status request timed out. Please try again."
+        : "Could not reach the platform API. Please try again.",
+      retryable: true,
+    };
+  }
+
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") ?? "";
+    let errorCode: string | undefined;
+    let fallbackMessage = "Could not fetch current participation status.";
+    let detail: string | undefined;
+
+    if (contentType.includes("application/json")) {
+      try {
+        const payload = (await response.json()) as ParticipationApiError;
+        errorCode = payload.code;
+        fallbackMessage = payload.error?.trim() || fallbackMessage;
+        detail = payload.detail;
+      } catch {
+        // keep defaults
+      }
+    } else {
+      const text = await response.text().catch(() => "");
+      if (text.trim().length > 0) {
+        fallbackMessage = text.trim().slice(0, 200);
+      }
+    }
+
+    return {
+      ok: false,
+      status: response.status,
+      code: errorCode,
+      requestId: getPlatformRequestId(response),
+      message: mapParticipationErrorCodeToMessage(
+        response.status,
+        errorCode,
+        fallbackMessage,
+        detail,
+      ),
+      retryable: response.status >= 500,
+    };
+  }
+
+  try {
+    const payload = (await response.json()) as ParticipationCheckinSuccess;
+    if (
+      !payload ||
+      !payload.season?.name ||
+      !payload.round?.id ||
+      typeof payload.round.number !== "number" ||
+      !payload.round.name ||
+      !payload.registration?.status
+    ) {
+      return {
+        ok: false,
+        status: 200,
+        code: "INVALID_RESPONSE",
+        requestId: getPlatformRequestId(response),
+        message: "HTTP 200 — Invalid response from participation API.",
+        retryable: false,
+      };
+    }
+
+    return { ok: true, data: payload };
+  } catch {
+    return {
+      ok: false,
+      status: 200,
+      code: "INVALID_RESPONSE",
+      requestId: getPlatformRequestId(response),
+      message: "HTTP 200 — Invalid response from participation API.",
+      retryable: false,
+    };
+  }
+}

@@ -57,7 +57,7 @@ export function buildProfileEmbed(
 
   const resultLines = lastResults.map(
     (r) =>
-      `Round/${r.round.number} — ${r.round.name} · P${r.position ?? "—"} · ${formatScore(r.score)} pts`,
+      `Round ${r.round.number} — ${r.round.name} · P${r.position ?? "—"} · ${formatScore(r.score)} pts`,
   );
 
   return new EmbedBuilder()
@@ -158,7 +158,7 @@ export function buildRoundOpenEmbed({ round }: RoundOpenData): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setColor(COLOUR_RED)
     .setTitle(
-      `${round.season.name} · Round/${round.number} — Registration Open`,
+      `${round.season.name} · Round ${round.number} — Registration Open`,
     )
     .addFields(
       { name: "Track", value: round.name, inline: true },
@@ -201,7 +201,7 @@ export function buildResultsPostedEmbed({
 
   return new EmbedBuilder()
     .setColor(COLOUR_GOLD)
-    .setTitle(`${round.season.name} · Round/${round.number} — Results`)
+    .setTitle(`${round.season.name} · Round ${round.number} — Results`)
     .setDescription(podiumLines.join("\n"))
     .setFooter({
       text: `Full leaderboard → ${PLATFORM_URL}/leaderboard`,

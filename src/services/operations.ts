@@ -273,7 +273,13 @@ export async function triggerAnnounceRound(
     response = await platformRequest("/api/bot/admin/announce-round", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ discordId, roundId, channelId }),
+      body: JSON.stringify({
+        discordId,
+        roundId,
+        channelId,
+        channel_id: channelId,
+        announcementChannelId: channelId,
+      }),
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (error: unknown) {

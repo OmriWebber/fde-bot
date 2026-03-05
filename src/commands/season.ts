@@ -29,7 +29,7 @@ async function execute(
   const summary = result.data;
   const next = summary.nextRound;
   const nextText = next
-    ? `Round/${next.number} — ${next.name}`
+    ? `Round ${next.number} — ${next.name}`
     : "No upcoming/live round";
 
   const nextSchedule = next?.scheduledAt
