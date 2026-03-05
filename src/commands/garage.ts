@@ -14,6 +14,12 @@ import {
 
 type DiscordChoice = { name: string; value: string };
 
+const CAR_FORMAT_REGEX = /^\d{4}\s+.+\s+.+$/;
+
+function isValidCarFormat(value: string): boolean {
+  return CAR_FORMAT_REGEX.test(value.trim());
+}
+
 const data = new SlashCommandBuilder()
   .setName("garage")
   .setDescription("View and manage your registered garage cars")
@@ -218,6 +224,13 @@ async function handleAdd(
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
   const car = interaction.options.getString("car", true).trim();
+  if (!isValidCarFormat(car)) {
+    await interaction.editReply(
+      "`car` must follow format: `YYYY Make Model` (example: `2020 Shelby GT500`).",
+    );
+    return;
+  }
+
   const PI = interaction.options.getString("pi", true).trim();
   const power = interaction.options.getString("power", true).trim();
   const weight = interaction.options.getString("weight", true).trim();
@@ -271,6 +284,13 @@ async function handleUpdate(
 ): Promise<void> {
   const carId = interaction.options.getString("car_id", true);
   const car = interaction.options.getString("car")?.trim();
+  if (car !== undefined && !isValidCarFormat(car)) {
+    await interaction.editReply(
+      "`car` must follow format: `YYYY Make Model` (example: `2020 Shelby GT500`).",
+    );
+    return;
+  }
+
   const PI = interaction.options.getString("pi")?.trim();
   const power = interaction.options.getString("power")?.trim();
   const weight = interaction.options.getString("weight")?.trim();

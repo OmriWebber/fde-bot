@@ -451,13 +451,26 @@ Implement:
 
 ---
 
-## Prompt L — Garage CRUD Routes
+## Prompt L — Garage CRUD Routes (V2 Contract Update)
 
 Implement bot-authenticated garage routes for Discord users:
 
 - Base path: `/api/bot/cars`
 - Auth: `Authorization: Bearer ${BOT_WEBHOOK_SECRET}` (fallback `x-bot-secret` accepted)
 - All routes must resolve user by `discordId` and only allow access to that user’s own cars.
+
+### Important V2 migration notes
+
+- The bot has moved from legacy `make`/`model`/`year` write inputs to spec-based fields.
+- Update all garage handlers to accept and persist these V2 fields:
+  - `car`
+  - `PI` (exact uppercase key)
+  - `power`
+  - `weight`
+  - `tireCompound`
+  - `tireWidths.front`
+  - `tireWidths.rear`
+- Keep legacy read fields (`make`, `model`, `year`) optional in responses for backward compatibility if needed, but V2 fields must be present for bot display.
 
 ### 1) View garage cars
 
@@ -471,6 +484,15 @@ Response (200):
   "cars": [
     {
       "id": "...",
+      "car": "2020 Shelby GT500",
+      "PI": "S1 900",
+      "power": "Supercharged Stock 5.2L V8 1003hp/825 ft-lb torque",
+      "weight": "3255 lbs",
+      "tireCompound": "Semi-Slick",
+      "tireWidths": {
+        "front": "305 mm",
+        "rear": "325 mm"
+      },
       "make": "Nissan",
       "model": "Silvia S15",
       "year": 2002,
@@ -511,6 +533,10 @@ Required fields for car creation:
 - `tireCompound`
 - `tireWidths.front`
 - `tireWidths.rear`
+
+Validation rules:
+
+- `car` must follow format: `YYYY Make Model` (example: `2020 Shelby GT500`).
 
 Response (200):
 
@@ -563,6 +589,8 @@ Rules:
 - `carId` required.
 - At least one mutable field (`car`, `PI`, `power`, `weight`, `tireCompound`, `tireWidths`, `number`) must be provided.
 - `number: null` clears the number.
+- `tireWidths` may be partial during updates (`front` only or `rear` only) based on user input.
+- If `car` is provided, it must follow format: `YYYY Make Model`.
 
 Response (200):
 
@@ -622,3 +650,10 @@ Use codes:
 - `CAR_NOT_FOUND`
 - `INVALID_QUERY`
 - `INTERNAL_ERROR`
+
+### Acceptance checks for platform team
+
+- `GET /api/bot/cars?discordId=...` returns V2 fields for each car.
+- `POST /api/bot/cars` accepts the exact V2 create body above.
+- `PATCH /api/bot/cars` accepts partial V2 updates and applies only provided fields.
+- `DELETE /api/bot/cars` removes only cars owned by the resolved driver.
